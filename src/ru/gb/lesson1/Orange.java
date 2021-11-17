@@ -1,4 +1,6 @@
-package ru.gb;
+package ru.gb.lesson1;
+
+import ru.gb.lesson1.Fruit;
 
 public class Orange extends Fruit {
     public Orange(double weight) {

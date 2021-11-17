@@ -1,4 +1,4 @@
-package ru.gb;
+package ru.gb.lesson1;
 
 public class Fruit {
     private final double weight;
