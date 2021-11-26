@@ -1,12 +1,14 @@
-package ru.gb.lesson2.server;
+package ru.gb.lesson3.server;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.List;
+import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+
 
 public class ClientHandler {
     private String name;
@@ -14,10 +16,10 @@ public class ClientHandler {
     private final ChatServer server;
     private final DataInputStream in;
     private final DataOutputStream out;
-
     public ClientHandler(Socket socket, ChatServer server) {
         this.socket = socket;
         this.server = server;
+
         try {
             in = new DataInputStream(socket.getInputStream());
             out = new DataOutputStream(socket.getOutputStream());
@@ -29,6 +31,9 @@ public class ClientHandler {
 
 
 
+ChatBuffer buffer = new ChatBuffer();
+
+
     public String getName() {
         return name;
     }
@@ -36,6 +41,8 @@ public class ClientHandler {
     public void start(){
         while (true){
             doAuthication();
+//            lastMsgtc();
+            getLastNLogLines();
             commands();
         }
     }
@@ -48,6 +55,8 @@ public class ClientHandler {
             throw new RuntimeException("Smth went wrong during a client authetication", ex);
         }
     }
+
+
     private void commands(){
         try {
             commandsWithMsg();
@@ -58,6 +67,24 @@ public class ClientHandler {
         }
     }
 
+
+    public void getLastNLogLines() {
+        File file = new File("./src/ru/gb/lesson3/server/history.txt");
+        int nLines = 100;
+        StringBuilder s = new StringBuilder();
+        try {
+            Process p = Runtime.getRuntime().exec("tail -"+nLines+" "+file);
+            java.io.BufferedReader input = new java.io.BufferedReader(new java.io.InputStreamReader(p.getInputStream()));
+            String line = null;
+
+            while((line = input.readLine()) != null){
+                s.append(line+'\n');
+            }
+        } catch (java.io.IOException e) {
+            e.printStackTrace();
+        }
+        sendMessage(s.toString());
+    }
 
         private void commandsWithMsg() throws IOException {
 
@@ -92,6 +119,7 @@ public class ClientHandler {
                     String pass = credentials[3];
                     changeUsername(login, newUsername, pass);
                 } else {
+                    buffer.doFileStreamDemo(this.getName() + ": " + inboundMessage + "\n");
                     server.broadcastMessage(this.getName() + ": " + inboundMessage);
                 }
             }
@@ -100,12 +128,20 @@ public class ClientHandler {
 
 
     private void timeout(int time){
+//        TimerTask task = new TimerTask() {
+//            @Override
+//            public void run() {
+//                sendMessage("Timeouted");
+//            }
+//        };
+//        Timer timer = new Timer("Timer");
         try {
             this.socket.setSoTimeout(1000 * time); // 0 - infinity
         } catch (SocketException ex) {
             throw new RuntimeException("Smth went wrong with timeout", ex);
         }
     }
+
 
     public void sendMessage(String outboundMessage){
         try {
@@ -178,4 +214,30 @@ public class ClientHandler {
 //        sendMessage("username will be change after reboot server");
 //    }
 
+//    private void lastMsg() throws IOException {
+//        File file = new File("./src/ru/gb/lesson3/server/history.txt");
+//        BufferedReader input = new BufferedReader(new FileReader(file));
+//        try (FileInputStream fin = new FileInputStream(file)) {
+//            int b;
+//            ArrayList msg = new ArrayList();
+//
+//
+//            while ((b = fin.read()) != -1) {
+//                msg.add((char) b);
+//            }
+//            String s = msg.toString().replaceAll("[,\\s\\[\\]]", "").replaceAll("//endmsg///", "\n");
+//            sendMessage(s);
+//
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
+//
+//    }
+    //    private void lastMsgtc(){
+//        try {
+//            lastMsg();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
 }

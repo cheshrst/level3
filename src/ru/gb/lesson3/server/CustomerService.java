@@ -1,4 +1,4 @@
-package ru.gb.lesson2.server;
+package ru.gb.lesson3.server;
 
 import java.sql.*;
 import java.util.ArrayList;
